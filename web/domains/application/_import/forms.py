@@ -1,3 +1,5 @@
+import logging
+
 from django.db.models import Q
 from django.forms import ModelChoiceField
 from web.domains.importer.models import Importer
@@ -6,9 +8,10 @@ from web.forms import ModelEditForm
 
 from .models import ImportApplication, ImportApplicationType
 
+logger = logging.getLogger(__name__)
+
 
 class NewImportApplicationForm(ModelEditForm):
-
     application_type = ModelChoiceField(
         queryset=ImportApplicationType.objects.filter(is_active=True),
         help_text='Imports of textiles and clothing or iron and steel of value \
@@ -26,7 +29,8 @@ class NewImportApplicationForm(ModelEditForm):
         queryset=Office.objects.none(),
         help_text='The office that this licence will be issued to.')
 
-    def _get_agent_importer_ids(self, user):
+    @staticmethod
+    def _get_agent_importer_ids(user):
         """ Get ids for main importers of given agents"""
         agents = Importer.objects \
             .filter(is_active=True) \
@@ -59,26 +63,38 @@ class NewImportApplicationForm(ModelEditForm):
                 is_active=True)
 
     def _update_importers(self, request, application_type):
+        logger.debug("_update_importers")
         importers = Importer.objects.filter(is_active=True)
         main_importers = Q(members=request.user, main_importer__isnull=True)
         agent_importers = Q(pk__in=self._get_agent_importer_ids(request.user))
 
         if application_type.type == 'Derogation from Sanctions Import Ban':
+            logger.debug("using main_importers")
             importers = importers.filter(main_importers)
         else:
+            logger.debug("using main_importers | agent_importers")
             importers = importers.filter(main_importers | agent_importers)
         self.fields['importer'].queryset = importers
 
     def _update_form(self, request):
+        logger.debug("_update_form")
         type_pk = self.data.get('application_type', None)
-        if type_pk:
-            type = ImportApplicationType.objects.get(pk=type_pk)
-            self._update_importers(request, type)
-            importer_pk = self.data.get('importer', None)
-            if importer_pk:
-                importer = Importer.objects.get(pk=importer_pk)
-                self._update_offices(importer)
-                self._update_agents(request.user, type, importer)
+        if not type_pk:
+            return
+
+        logger.debug(f"selected application_type id {type_pk}")
+        selected_application_type = ImportApplicationType.objects.get(pk=type_pk)
+
+        logger.debug(selected_application_type)
+        self._update_importers(request, selected_application_type)
+
+        importer_pk = self.data.get('importer', None)
+        if not importer_pk:
+            return
+
+        importer = Importer.objects.get(pk=importer_pk)
+        self._update_offices(importer)
+        self._update_agents(request.user, selected_application_type, importer)
 
     def __init__(self, request, *args, **kwargs):
         super().__init__(*args, **kwargs)

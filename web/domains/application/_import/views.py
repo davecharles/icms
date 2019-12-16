@@ -8,8 +8,8 @@ from .models import ImportApplication
 class ImportApplicationCreateView(ModelCreateView):
     template_name = 'web/application/import/create.html'
     model = ImportApplication
-    # TODO: Change to application form when created
-    success_url = reverse_lazy('product-legislation-list')
+
+    success_url = reverse_lazy('product-legislation-list')  # TODO: Change to application form when created
     cancel_url = success_url
     form_class = NewImportApplicationForm
     page_title = 'Create Import Application'
