@@ -30,14 +30,36 @@ urlpatterns = [
         name="case-management",
     ),
     re_path(
-        "^case/(?P<pk>[0-9]+)/(?P<entity>importer|exporter)/access-approval/$",
+        "^case/(?P<pk>[0-9]+)/(?P<entity>importer|exporter)/close-access-request/$",
+        views.management_response,
+        name="case-management-response",
+    ),
+    # approval request
+    re_path(
+        "^case/(?P<pk>[0-9]+)/(?P<entity>importer|exporter)/approval-request/$",
         views.management_access_approval,
         name="case-management-access-approval",
     ),
     re_path(
-        "^case/(?P<pk>[0-9]+)/(?P<entity>importer|exporter)/close-access-request/$",
-        views.management_response,
-        name="case-management-response",
+        "^case/(?P<application_pk>[0-9]+)/(?P<entity>importer|exporter)/approval-request/(?P<approval_request_pk>[0-9]+)/withdraw/$",
+        views.management_access_approval_withdraw,
+        name="case-management-approval-request-withdraw",
+    ),
+    # approval request response by importer/exporter contacts
+    re_path(
+        "case/(?P<pk>[0-9]+)/(?P<entity>importer|exporter)/take_ownership/$",
+        views.take_ownership_approval,
+        name="case-approval-take-ownership",
+    ),
+    re_path(
+        "case/(?P<pk>[0-9]+)/(?P<entity>importer|exporter)/release_ownership/$",
+        views.release_ownership_approval,
+        name="case-approval-release-ownership",
+    ),
+    re_path(
+        "case/(?P<application_pk>[0-9]+)/(?P<entity>importer|exporter)/approval-request/(?P<approval_request_pk>[0-9]+)/$",
+        views.case_approval_respond,
+        name="case-approval-respond",
     ),
     # management for further information requests
     re_path(
